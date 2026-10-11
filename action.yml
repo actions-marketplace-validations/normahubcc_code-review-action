@@ -1,5 +1,5 @@
 name: 'NormaHub AI Code Review'
-description: 'Production-grade GitHub Action for automated Pull Request code reviews powered by NormaHub AI models (DeepSeek, Claude, GPT).'
+description: 'Production-grade GitHub Action for automated Pull Request code reviews powered by NormaHub AI models (DeepSeek, Claude, Qwen).'
 author: 'NormaHub Team'
 branding:
   icon: 'check-circle'
@@ -14,7 +14,7 @@ inputs:
     required: true
     default: ${{ github.token }}
   model:
-    description: 'Model ID to use for code review (e.g. deepseek-v4.1-flash, claude-sonnet-5-5, gpt-5.5)'
+    description: 'Model ID to use for code review (e.g. deepseek-v4.1-flash, claude-sonnet-5-5, qwen-2.5-coder-32b)'
     required: false
     default: 'deepseek-v4.1-flash'
   max_diff_length:
