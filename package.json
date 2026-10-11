@@ -1,0 +1,21 @@
+{
+  "name": "@normahub/code-review-action",
+  "version": "1.0.0",
+  "description": "Automated GitHub Action for Pull Request code reviews powered by NormaHub AI models",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "github-action",
+    "code-review",
+    "ai-code-review",
+    "normahub",
+    "deepseek",
+    "claude",
+    "security"
+  ],
+  "author": "NormaHub Team <manager@normahub.cc>",
+  "license": "MIT"
+}

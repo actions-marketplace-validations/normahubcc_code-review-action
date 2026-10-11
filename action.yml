@@ -1,5 +1,5 @@
 name: 'NormaHub AI Code Review'
-description: 'Automated GitHub Action for Pull Request code review powered by NormaHub AI models (DeepSeek, Claude, GPT).'
+description: 'Production-grade GitHub Action for automated Pull Request code reviews powered by NormaHub AI models (DeepSeek, Claude, GPT).'
 author: 'NormaHub Team'
 branding:
   icon: 'check-circle'
@@ -10,7 +10,7 @@ inputs:
     description: 'NormaHub API Key (get from https://normahub.cc)'
     required: true
   github_token:
-    description: 'GitHub Token for posting review comments (use secrets.GITHUB_TOKEN)'
+    description: 'GitHub Token for posting and updating review comments'
     required: true
     default: ${{ github.token }}
   model:
@@ -20,7 +20,11 @@ inputs:
   max_diff_length:
     description: 'Maximum characters of diff to review before truncating'
     required: false
-    default: '45000'
+    default: '50000'
+  ignore_patterns:
+    description: 'Custom comma- or newline-separated regex patterns to exclude files'
+    required: false
+    default: ''
 
 runs:
   using: 'composite'
@@ -32,8 +36,10 @@ runs:
         GITHUB_TOKEN: ${{ inputs.github_token }}
         INPUT_MODEL: ${{ inputs.model }}
         INPUT_MAX_DIFF_LENGTH: ${{ inputs.max_diff_length }}
+        INPUT_IGNORE_PATTERNS: ${{ inputs.ignore_patterns }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_API_URL: ${{ github.api_url }}
+        INPUT_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
       run: |
-        node "${{ github.action_path }}/review.js"
+        node "${{ github.action_path }}/src/index.js"
