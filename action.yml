@@ -25,6 +25,10 @@ inputs:
     description: 'Custom comma- or newline-separated regex patterns to exclude files'
     required: false
     default: ''
+  fail_on_critical:
+    description: 'Fail the GitHub Action step if any CRITICAL security/logic vulnerabilities are found'
+    required: false
+    default: 'false'
 
 runs:
   using: 'composite'
@@ -37,6 +41,7 @@ runs:
         INPUT_MODEL: ${{ inputs.model }}
         INPUT_MAX_DIFF_LENGTH: ${{ inputs.max_diff_length }}
         INPUT_IGNORE_PATTERNS: ${{ inputs.ignore_patterns }}
+        INPUT_FAIL_ON_CRITICAL: ${{ inputs.fail_on_critical }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_API_URL: ${{ github.api_url }}

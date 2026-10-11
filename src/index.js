@@ -88,6 +88,13 @@ async function run() {
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
   console.log(`✅ Review successfully ${result.action} (comment ID: ${result.id}) in ${duration}s!`);
+
+  const failOnCritical = process.env.INPUT_FAIL_ON_CRITICAL === 'true';
+  const hasCriticals = (analysis.findings || []).some((f) => f.severity === 'CRITICAL');
+  if (failOnCritical && hasCriticals) {
+    console.error('::error::NormaHub Code Review detected critical security/logic vulnerabilities in PR. Failing CI check as requested.');
+    process.exit(1);
+  }
 }
 
 run().catch((err) => {

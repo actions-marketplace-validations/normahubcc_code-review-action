@@ -5,21 +5,6 @@
 
 export const BOT_SIGNATURE = '<!-- normahub-code-review-bot -->';
 
-const SEVERITY_CONFIG = {
-  CRITICAL: {
-    emoji: '🔴',
-    label: 'Critical / Security',
-  },
-  WARNING: {
-    emoji: '🟡',
-    label: 'Warning / Edge Case',
-  },
-  SUGGESTION: {
-    emoji: '💡',
-    label: 'Suggestion',
-  },
-};
-
 const RISK_BADGES = {
   HIGH: '🔴 **Risk Level: HIGH**',
   MEDIUM: '🟡 **Risk Level: MEDIUM**',
@@ -48,11 +33,24 @@ export function formatReviewComment(analysis, metadata = {}) {
   const findings = analysis.findings || [];
   const positives = analysis.positives || [];
 
+  const criticals = findings.filter((f) => f.severity === 'CRITICAL');
+  const warnings = findings.filter((f) => f.severity === 'WARNING');
+  const suggestions = findings.filter((f) => f.severity === 'SUGGESTION' || !f.severity);
+
+  // Clear 1-second executive verdict
+  let verdict = '✅ **Verdict: Clean to merge** (no blocking issues)';
+  if (criticals.length > 0) {
+    verdict = `🚨 **Verdict: Blocked** (${criticals.length} critical issue${criticals.length > 1 ? 's' : ''} require attention)`;
+  } else if (warnings.length > 0) {
+    verdict = `⚠️ **Verdict: Caution** (${warnings.length} warning${warnings.length > 1 ? 's' : ''} detected)`;
+  }
+
   const parts = [
     BOT_SIGNATURE,
     `### 🤖 NormaHub AI Code Review &nbsp; ${riskBadge}`,
     '',
-    `> **Commit:** \`${commitSha}\` &nbsp;|&nbsp; **Files Reviewed:** ${reviewedFiles.length} &nbsp;|&nbsp; **Noise Filtered:** ${ignoredFiles.length}${isTruncated ? ' &nbsp;|&nbsp; ⚠️ *Diff partially truncated*' : ''}`,
+    `> ${verdict}  `,
+    `> **Commit:** \`${commitSha}\` &nbsp;|&nbsp; **Files:** ${reviewedFiles.length} &nbsp;|&nbsp; **Noise Filtered:** ${ignoredFiles.length}${isTruncated ? ' &nbsp;|&nbsp; ⚠️ *Diff partially truncated*' : ''}`,
     '',
     `**Summary:** ${analysis.summary}`,
     '',
@@ -62,44 +60,65 @@ export function formatReviewComment(analysis, metadata = {}) {
     parts.push(
       '---',
       '#### ✅ No critical bugs or security vulnerabilities found',
-      'The changes appear safe, logically sound, and ready for maintainer review.',
+      'The changes appear safe, logically sound, and ready for review.',
       ''
     );
   } else {
-    // Group findings by severity
-    const criticals = findings.filter((f) => f.severity === 'CRITICAL');
-    const warnings = findings.filter((f) => f.severity === 'WARNING');
-    const suggestions = findings.filter((f) => f.severity === 'SUGGESTION' || !f.severity);
-
-    const renderGroup = (title, items, icon) => {
-      if (items.length === 0) return;
-      parts.push(`---`, `#### ${icon} ${title} (${items.length})`, '');
-
-      for (const item of items) {
+    // 1. Critical issues (Always expanded, prominent)
+    if (criticals.length > 0) {
+      parts.push(`---`, `#### 🔴 Critical & Security Issues (${criticals.length})`, '');
+      for (const item of criticals) {
         const location = item.line ? `\`${item.file}:${item.line}\`` : `\`${item.file}\``;
-        parts.push(`- **${item.title || 'Observation'}** in ${location}`);
+        parts.push(`- **${item.title || 'Security/Critical Flaw'}** in ${location}`);
         parts.push(`  ${item.description}`);
-
         if (item.suggestion && item.suggestion.trim()) {
-          parts.push(
-            '  <details><summary>💡 Suggested fix</summary>',
-            '',
-            item.suggestion.startsWith('```') ? `  ${item.suggestion}` : `  \`\`\`suggestion\n  ${item.suggestion}\n  \`\`\``,
-            '  </details>',
-            ''
-          );
+          const suggCode = item.suggestion.startsWith('```') ? item.suggestion : `\`\`\`suggestion\n${item.suggestion}\n\`\`\``;
+          parts.push('  <details><summary>💡 Suggested fix</summary>', '', `  ${suggCode}`, '  </details>', '');
         } else {
           parts.push('');
         }
       }
-    };
+    }
 
-    renderGroup('Critical & Security Issues', criticals, '🔴');
-    renderGroup('Warnings & Edge Cases', warnings, '🟡');
-    renderGroup('Suggestions & Improvements', suggestions, '💡');
+    // 2. Warnings & Edge cases (Always expanded, actionable)
+    if (warnings.length > 0) {
+      parts.push(`---`, `#### 🟡 Warnings & Edge Cases (${warnings.length})`, '');
+      for (const item of warnings) {
+        const location = item.line ? `\`${item.file}:${item.line}\`` : `\`${item.file}\``;
+        parts.push(`- **${item.title || 'Warning'}** in ${location}`);
+        parts.push(`  ${item.description}`);
+        if (item.suggestion && item.suggestion.trim()) {
+          const suggCode = item.suggestion.startsWith('```') ? item.suggestion : `\`\`\`suggestion\n${item.suggestion}\n\`\`\``;
+          parts.push('  <details><summary>💡 Suggested fix</summary>', '', `  ${suggCode}`, '  </details>', '');
+        } else {
+          parts.push('');
+        }
+      }
+    }
+
+    // 3. Minor suggestions (Collapsed under details to avoid developer overthinking and visual fatigue)
+    if (suggestions.length > 0) {
+      parts.push(
+        `---`,
+        `<details><summary><b>💡 Minor Suggestions & Code Improvements (${suggestions.length})</b></summary>`,
+        ''
+      );
+      for (const item of suggestions) {
+        const location = item.line ? `\`${item.file}:${item.line}\`` : `\`${item.file}\``;
+        parts.push(`- **${item.title || 'Suggestion'}** in ${location}`);
+        parts.push(`  ${item.description}`);
+        if (item.suggestion && item.suggestion.trim()) {
+          const suggCode = item.suggestion.startsWith('```') ? item.suggestion : `\`\`\`suggestion\n${item.suggestion}\n\`\`\``;
+          parts.push('  <details><summary>Suggested fix</summary>', '', `  ${suggCode}`, '  </details>', '');
+        } else {
+          parts.push('');
+        }
+      }
+      parts.push('</details>', '');
+    }
   }
 
-  // Highlighted positives (collapsible)
+  // Highlighted strengths (Collapsed)
   if (positives.length > 0) {
     parts.push(
       '<details><summary><b>🌟 Highlighted Strengths (' + positives.length + ')</b></summary>',
@@ -110,7 +129,7 @@ export function formatReviewComment(analysis, metadata = {}) {
     );
   }
 
-  // Ignored / filtered files list (collapsible)
+  // Ignored / filtered files list (Collapsed)
   if (ignoredFiles.length > 0) {
     parts.push(
       '<details><summary><b>Filtered Non-Code Files (' + ignoredFiles.length + ')</b></summary>',
