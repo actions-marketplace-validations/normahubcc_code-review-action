@@ -1,0 +1,39 @@
+name: 'NormaHub AI Code Review'
+description: 'Automated GitHub Action for Pull Request code review powered by NormaHub AI models (DeepSeek, Claude, GPT).'
+author: 'NormaHub Team'
+branding:
+  icon: 'check-circle'
+  color: 'purple'
+
+inputs:
+  normahub_api_key:
+    description: 'NormaHub API Key (get from https://normahub.cc)'
+    required: true
+  github_token:
+    description: 'GitHub Token for posting review comments (use secrets.GITHUB_TOKEN)'
+    required: true
+    default: ${{ github.token }}
+  model:
+    description: 'Model ID to use for code review (e.g. deepseek-v4.1-flash, claude-sonnet-5-5, gpt-5.5)'
+    required: false
+    default: 'deepseek-v4.1-flash'
+  max_diff_length:
+    description: 'Maximum characters of diff to review before truncating'
+    required: false
+    default: '45000'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Run NormaHub Code Review
+      shell: bash
+      env:
+        NORMAHUB_API_KEY: ${{ inputs.normahub_api_key }}
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_MAX_DIFF_LENGTH: ${{ inputs.max_diff_length }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        GITHUB_API_URL: ${{ github.api_url }}
+      run: |
+        node "${{ github.action_path }}/review.js"
