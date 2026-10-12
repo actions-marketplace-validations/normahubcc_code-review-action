@@ -60,6 +60,8 @@ jobs:
 
 ## Пример вердикта в Pull Request
 
+> 🔍 **Живая витрина кода:** Посмотрите реальный код и дифф в ветке [`demo/showcase-code-review`](https://github.com/normahubcc/code-review-action/tree/demo/showcase-code-review) или откройте [сравнение веток (Compare Pull Request)](https://github.com/normahubcc/code-review-action/compare/main...demo/showcase-code-review).
+
 Бот публикует лаконичный структурированный комментарий без спама придирками к стилю, фокусируясь только на реальных дефектах:
 
 <details open>
