@@ -10,9 +10,9 @@
 [![GitHub Action](https://img.shields.io/badge/action-NormaHub_Code_Review-purple?style=flat-square&logo=github)](https://github.com/normahubcc/code-review-action)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-blue.svg?style=flat-square)](package.json)
-[![Models](https://img.shields.io/badge/models-DeepSeek_|_Claude_|_Qwen-6366f1.svg?style=flat-square)](https://normahub.cc/models)
+[![Models](https://img.shields.io/badge/models-DeepSeek_|_Claude-6366f1.svg?style=flat-square)](https://normahub.cc/models)
 
-Автоматизированный GitHub Action для проведения код-ревью в Pull Request на базе моделей [NormaHub API](https://normahub.cc) (DeepSeek v4.1 Flash, Claude Sonnet 5.5, Qwen 2.5 Coder).
+Автоматизированный GitHub Action для проведения код-ревью в Pull Request на базе моделей [NormaHub API](https://normahub.cc) (DeepSeek v4.1 Flash, Claude Sonnet 5.5).
 
 ---
 
@@ -49,7 +49,7 @@ jobs:
         with:
           normahub_api_key: ${{ secrets.NORMAHUB_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          model: 'deepseek-v4.1-flash' # или 'claude-sonnet-5-5', 'qwen-2.5-coder-32b'
+          model: 'deepseek-v4.1-flash' # или 'claude-sonnet-5-5'
 ```
 
 Добавьте ваш API-ключ в **Settings > Secrets and variables > Actions > Secrets**:
@@ -101,7 +101,7 @@ on:
 |---|---|---|---|
 | `normahub_api_key` | API-ключ от NormaHub | **Да** | — |
 | `github_token` | GitHub токен для публикации/обновления комментариев | **Да** | `${{ github.token }}` |
-| `model` | Идентификатор модели (`deepseek-v4.1-flash`, `claude-sonnet-5-5`, `qwen-2.5-coder-32b`) | Нет | `deepseek-v4.1-flash` |
+| `model` | Идентификатор модели (`deepseek-v4.1-flash`, `claude-sonnet-5-5`) | Нет | `deepseek-v4.1-flash` |
 | `max_diff_length` | Лимит символов диффа (включаются приоритетные файлы) | Нет | `50000` |
 | `ignore_patterns` | Дополнительные regex-паттерны для исключения файлов через запятую | Нет | `""` |
 | `fail_on_critical` | Прерывать ли выполнение шага (`true`/`false`) при обнаружении уязвимостей | Нет | `false` |
@@ -114,7 +114,6 @@ on:
 |---|---|---|
 | `deepseek-v4.1-flash` | Рекомендуется по умолчанию. Быстрый и глубокий анализ логики. | **$0.018 in / $0.050 out** (~0.05 ₽ за ревью) |
 | `claude-sonnet-5-5` | Архитектурный синтез и аудит безопасности сложных систем. | $0.35 in / $1.80 out |
-| `qwen-2.5-coder-32b` | Оптимизирован для языков C++, Go, Python, Rust. | $0.035 in / $0.140 out |
 
 ---
 
