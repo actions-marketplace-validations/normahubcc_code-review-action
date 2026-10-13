@@ -7,7 +7,7 @@
 import { parseAndFilterDiff } from './diff.js';
 import { analyzeDiff } from './analyzer.js';
 import { formatReviewComment } from './formatter.js';
-import { fetchPullRequestDiff, postOrUpdateComment } from './github.js';
+import { fetchPullRequestDiff, postOrUpdateComment, createPullRequestReview } from './github.js';
 
 const NORMAHUB_API_KEY = process.env.NORMAHUB_API_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -82,12 +82,37 @@ async function run() {
     isTruncated: parsed.isTruncated,
   });
 
-  // 5. Post or update comment on GitHub (idempotent)
-  console.log('💬 Publishing review comment to PR...');
-  const result = await postOrUpdateComment(API_URL, REPO, PR_NUMBER, commentMarkdown, GITHUB_TOKEN);
-  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  // 5. Post review to GitHub
+  console.log('💬 Publishing review to PR...');
+  const inlineEnabled = process.env.INPUT_INLINE_COMMENTS !== 'false';
+  let reviewPublished = false;
 
-  console.log(`✅ Review successfully ${result.action} (comment ID: ${result.id}) in ${duration}s!`);
+  const validFindings = (analysis.findings || []).filter((f) => f && f.file && f.line);
+  if (inlineEnabled && COMMIT_SHA && validFindings.length > 0) {
+    try {
+      console.log(`💡 Creating Pull Request Review with ${validFindings.length} inline suggestion(s)...`);
+      const rev = await createPullRequestReview(
+        API_URL,
+        REPO,
+        PR_NUMBER,
+        COMMIT_SHA,
+        commentMarkdown,
+        validFindings,
+        GITHUB_TOKEN
+      );
+      console.log(`✅ GitHub PR Review created (Review ID: ${rev.id}) with ${rev.inlineCount} inline comment(s)!`);
+      reviewPublished = true;
+    } catch (inlineErr) {
+      console.warn(`⚠️ Inline review failed (${inlineErr.message}). Falling back to PR summary comment.`);
+    }
+  }
+
+  if (!reviewPublished) {
+    const result = await postOrUpdateComment(API_URL, REPO, PR_NUMBER, commentMarkdown, GITHUB_TOKEN);
+    console.log(`✅ Review comment successfully ${result.action} (comment ID: ${result.id})`);
+  }
+  const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+  console.log(`⏱️ Completed in ${duration}s!`);
 
   const failOnCritical = process.env.INPUT_FAIL_ON_CRITICAL === 'true';
   const hasCriticals = (analysis.findings || []).some((f) => f.severity === 'CRITICAL');

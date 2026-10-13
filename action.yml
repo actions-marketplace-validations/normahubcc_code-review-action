@@ -29,6 +29,10 @@ inputs:
     description: 'Fail the GitHub Action step if any CRITICAL security/logic vulnerabilities are found'
     required: false
     default: 'false'
+  inline_comments:
+    description: 'Post native in-line review suggestions directly to PR code lines (GitHub Reviews API)'
+    required: false
+    default: 'true'
 
 runs:
   using: 'composite'
@@ -42,9 +46,11 @@ runs:
         INPUT_MAX_DIFF_LENGTH: ${{ inputs.max_diff_length }}
         INPUT_IGNORE_PATTERNS: ${{ inputs.ignore_patterns }}
         INPUT_FAIL_ON_CRITICAL: ${{ inputs.fail_on_critical }}
+        INPUT_INLINE_COMMENTS: ${{ inputs.inline_comments }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_API_URL: ${{ github.api_url }}
         INPUT_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
       run: |
         node "${{ github.action_path }}/src/index.js"
+
