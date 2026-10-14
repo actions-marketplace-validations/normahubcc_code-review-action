@@ -8,6 +8,7 @@ import { parseAndFilterDiff } from './diff.js';
 import { analyzeDiff } from './analyzer.js';
 import { formatReviewComment } from './formatter.js';
 import { fetchPullRequestDiff, postOrUpdateComment, createPullRequestReview } from './github.js';
+import { loadReviewConfig } from './config.js';
 
 const NORMAHUB_API_KEY = process.env.NORMAHUB_API_KEY;
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
@@ -41,8 +42,21 @@ if (!PR_NUMBER || !REPO) {
 async function run() {
   const startTime = Date.now();
   console.log(`🚀 Starting NormaHub Code Review`);
+  const repoConfig = loadReviewConfig();
+  const effectiveModel = repoConfig.model || MODEL;
+  const effectiveIgnorePatterns = [
+    ...IGNORE_PATTERNS,
+    ...(repoConfig.ignore_patterns || []),
+  ];
+
   console.log(`Repository: ${REPO}#${PR_NUMBER}`);
-  console.log(`Model: ${MODEL}`);
+  console.log(`Model: ${effectiveModel}`);
+  if (repoConfig.language) {
+    console.log(`Language: ${repoConfig.language}`);
+  }
+  if (repoConfig.custom_rules?.length) {
+    console.log(`Custom Rules Active: ${repoConfig.custom_rules.length} rule(s)`);
+  }
 
   // 1. Fetch raw diff
   console.log('📥 Fetching pull request diff from GitHub...');
@@ -51,7 +65,7 @@ async function run() {
   // 2. Filter noise
   const parsed = parseAndFilterDiff(rawDiff, {
     maxDiffLength: MAX_DIFF_LEN,
-    extraIgnorePatterns: IGNORE_PATTERNS,
+    extraIgnorePatterns: effectiveIgnorePatterns,
   });
 
   console.log(`📊 Diff Statistics:`);
@@ -65,10 +79,12 @@ async function run() {
   }
 
   // 3. Analyze diff via NormaHub API
-  console.log(`🧠 Invoking NormaHub API with model ${MODEL}...`);
+  console.log(`🧠 Invoking NormaHub API with model ${effectiveModel}...`);
   const analysis = await analyzeDiff(parsed.includedDiff, {
     apiKey: NORMAHUB_API_KEY,
-    model: MODEL,
+    model: effectiveModel,
+    customRules: repoConfig.custom_rules,
+    language: repoConfig.language,
   });
 
   console.log(`🔍 Analysis finished. Risk Level: ${analysis.risk_level}, Findings: ${analysis.findings.length}`);

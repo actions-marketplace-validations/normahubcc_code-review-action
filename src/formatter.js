@@ -45,6 +45,14 @@ export function formatReviewComment(analysis, metadata = {}) {
     verdict = `⚠️ **Verdict: Caution** (${warnings.length} warning${warnings.length > 1 ? 's' : ''} detected)`;
   }
 
+  const scorecardTable = [
+    '| Category | Findings | Status |',
+    '|:---|:---:|:---:|',
+    `| 🛡️ Security & Critical | ${criticals.length} | ${criticals.length === 0 ? '🟢 Pass' : '🔴 Action Required'} |`,
+    `| ⚠️ Warnings & Reliability | ${warnings.length} | ${warnings.length === 0 ? '🟢 Pass' : '🟡 Review Advised'} |`,
+    `| 💡 Optimization & Suggestions | ${suggestions.length} | ℹ️ ${suggestions.length} Notes |`,
+  ].join('\n');
+
   const parts = [
     BOT_SIGNATURE,
     `### 🤖 NormaHub AI Code Review &nbsp; ${riskBadge}`,
@@ -53,6 +61,8 @@ export function formatReviewComment(analysis, metadata = {}) {
     `> **Commit:** \`${commitSha}\` &nbsp;|&nbsp; **Files:** ${reviewedFiles.length} &nbsp;|&nbsp; **Noise Filtered:** ${ignoredFiles.length}${isTruncated ? ' &nbsp;|&nbsp; ⚠️ *Diff partially truncated*' : ''}`,
     '',
     `**Summary:** ${analysis.summary}`,
+    '',
+    scorecardTable,
     '',
   ];
 

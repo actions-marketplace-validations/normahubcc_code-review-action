@@ -103,10 +103,19 @@ export async function analyzeDiff(diff, options = {}) {
     throw new Error('NORMAHUB_API_KEY is required for analysis.');
   }
 
+  let systemPrompt = SYSTEM_PROMPT;
+  if (options.customRules && options.customRules.length > 0) {
+    systemPrompt += `\n\nCUSTOM REPOSITORY GUIDELINES CONFIGURED BY TEAM:\n` +
+      options.customRules.map((r, i) => `${i + 1}. ${r}`).join('\n');
+  }
+  if (options.language === 'ru') {
+    systemPrompt += `\n\nLANGUAGE REQUIREMENT:\nProvide the "summary", "title", "description", and "positives" strictly in professional Russian.`;
+  }
+
   const payload = {
     model,
     messages: [
-      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'system', content: systemPrompt },
       {
         role: 'user',
         content: `Perform a code review on the following Pull Request diff:\n\n\`\`\`diff\n${diff}\n\`\`\``,
