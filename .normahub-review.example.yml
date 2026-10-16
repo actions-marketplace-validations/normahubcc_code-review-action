@@ -1,0 +1,20 @@
+# NormaHub AI Code Review Configuration
+# Place this file as .normahub-review.yml or .github/normahub-review.yml in your repository root.
+
+language: ru # 'ru' for Russian or 'en' for English review commentary
+model: deepseek-v4.1-flash # Model to run review: deepseek-v4.1-flash, claude-sonnet-5-5, etc.
+min_severity: WARNING # Minimum severity: CRITICAL, WARNING, SUGGESTION
+
+# Custom rules specific to your team's architecture and security policies
+custom_rules:
+  - "Verify all database queries use parameterized prepared statements"
+  - "Enforce Feature-Sliced Design (FSD) layer boundaries (lower layers cannot import upper layers)"
+  - "Ensure all async promises handle errors with try/catch or .catch()"
+  - "Check for secret/credential leakage or hardcoded tokens"
+
+# File patterns to exclude from review in addition to default noise filters
+ignore_patterns:
+  - "dist/**"
+  - "build/**"
+  - "*.generated.*"
+  - "migrations/**"
